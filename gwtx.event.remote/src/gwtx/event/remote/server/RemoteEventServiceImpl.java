@@ -214,7 +214,7 @@ public class RemoteEventServiceImpl extends RemoteServiceServlet implements Remo
 		if(lastSequence == -1) {
 			lastSequence = ringBuffer.getCursor() == -1 ? -1 : cursor;
 		}
-		//! System.err.println("Cursor is at: " + cursor + ", lastSequence is at: " + lastSequence + " ,bufferSize is: " + ringBuffer.getBufferSize());
+		System.err.println("Cursor is at: " + cursor + ", lastSequence is at: " + lastSequence + " ,bufferSize is: " + ringBuffer.getBufferSize());
 		long waitSequence = lastSequence + 1;		
 		if((cursor - lastSequence) > ringBuffer.getBufferSize()) {
 			throw new BufferOverflowException();
@@ -223,7 +223,7 @@ public class RemoteEventServiceImpl extends RemoteServiceServlet implements Remo
 			getAtLeastOneDuringMaximumWaitingTime(waitSequence, startTime, result);
 		}
 		session.updateSequence(lastSequence + result.size());
-		//! System.err.println(">>> Returning after elapsed: " + ((double) (System.nanoTime() - startTime) / 1000000000.0));
+		System.err.println(">>> Returning after elapsed: " + ((double) (System.nanoTime() - startTime) / 1000000.0));
 		return result;
 	}
 
@@ -233,7 +233,7 @@ public class RemoteEventServiceImpl extends RemoteServiceServlet implements Remo
 	    long whatsLeftOfMinimumWaitingTime = minimumWaitingTime - (elapsedNanos / 1000000L);
 	    while(whatsLeftOfMinimumWaitingTime > 0) { 
 			try {
-				//! System.err.println("Waiting for " + sequence + " (MIN)...");
+				System.err.print("Waiting for " + sequence + " (MIN)... ");
 				long currentSequence = barrier.waitFor(sequence, whatsLeftOfMinimumWaitingTime, TimeUnit.MILLISECONDS);
 				if(currentSequence >= sequence) { //? Something happened.
 					Referer<RemoteGwtEvent<?>> referer = ringBuffer.get(sequence++);
@@ -244,7 +244,8 @@ public class RemoteEventServiceImpl extends RemoteServiceServlet implements Remo
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			whatsLeftOfMinimumWaitingTime -= ((System.nanoTime() - startTimeInNanos) / 1000000L);
+			whatsLeftOfMinimumWaitingTime = minimumWaitingTime - ((System.nanoTime() - startTimeInNanos) / 1000000L);
+			System.err.println("what's left " + whatsLeftOfMinimumWaitingTime);
 	    }
 		return result;
 	}
