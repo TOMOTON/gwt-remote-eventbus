@@ -17,16 +17,14 @@
  */
 package gwtx.event.remote.server;
 
-import gwtx.event.remote.shared.AbstractRemoteGwtEvent;
+import gwtx.event.remote.client.RemoteEventService;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
  * Static entry point for external classes which need to fire an event through
- * the remote event bus.
+ * the remote event bus from the server-side.
  * 
  * @author Dann Martens
  */
@@ -38,27 +36,27 @@ public class RemoteEventHandler {
 		
 	}
 
-	public static RemoteEventHandler getInstance() {
+	static RemoteEventHandler getInstance() {
 		return Singleton.INSTANCE;
 	}
-
-	private Thread daemonThread;
 	
-	private ExecutorService executor;
+	private ConcurrentHashMap<String, RemoteEventServiceImpl> serviceMap = new ConcurrentHashMap<String, RemoteEventServiceImpl>();
 	
-	private RemoteEventHandler() {
-		daemonThread = new Thread(RemoteEventHandler.class.getSimpleName());
-		daemonThread.setDaemon(true);
-		executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
-			@Override
-			public Thread newThread(Runnable runnable) {
-				return daemonThread;
-			}
-		});
+	public void register(String name, RemoteEventServiceImpl remoteEventService) {
+		if(serviceMap.putIfAbsent(name, remoteEventService) != null) {
+			throw new IllegalStateException("A remote event service with name '" + name + "' has already been registered!");
+		}
+	}
+	
+	public RemoteEventService get() {
+		return get(RemoteEventServiceImpl.DEFAULT_NAME);
 	}
 
-	public void fireEvent(AbstractRemoteGwtEvent<?> event) {
-		
+	public RemoteEventService get(String name) {
+		RemoteEventService result = serviceMap.get(name);
+		if(result == null)
+			throw new NullPointerException("No remote event service with name '" + name + "' has been registered!");
+		return result;
 	}
 	
 }

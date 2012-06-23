@@ -64,6 +64,8 @@ public class RemoteEventServiceImpl extends RemoteServiceServlet implements Remo
 	
 	private static final long DEFAULT_MAXIMUM_WAITING_TIME = 10000L;
 	
+	static final String DEFAULT_NAME = "DEFAULT";
+	
 	private static class Referer<T> {
 
 		private T referenced;
@@ -84,6 +86,8 @@ public class RemoteEventServiceImpl extends RemoteServiceServlet implements Remo
 			return (Referer<RemoteGwtEvent<?>>) new Referer();
 		}
 	};
+	
+	private String name = DEFAULT_NAME;
 	
 	private int bufferSize = DEFAULT_BUFFER_SIZE;
 	
@@ -108,6 +112,10 @@ public class RemoteEventServiceImpl extends RemoteServiceServlet implements Remo
 		//? Mandatory invocation by contract.
 		super.init(config);
 		//? Read parameters, if any.
+		String candidateName = config.getInitParameter("name");
+		if(candidateName != null && candidateName.length() > 0) {
+			name = candidateName;
+		}
 		try {
 			String value = config.getInitParameter("bufferSize");
 			bufferSize = Integer.parseInt(value);
@@ -119,7 +127,7 @@ public class RemoteEventServiceImpl extends RemoteServiceServlet implements Remo
 		try {
 			String value = config.getInitParameter("maximumWaitingTime");
 			maximumWaitingTime = Integer.parseInt(value);
-		} catch (Exception ignore) {}		
+		} catch (Exception ignore) {}				
 		//? Local initialization.
 		ringBuffer = new RingBuffer<Referer<RemoteGwtEvent<?>>>(EVENT_FACTORY, new SingleThreadedClaimStrategy(bufferSize), new SleepingWaitStrategy());
 		barrier = ringBuffer.newBarrier();
@@ -139,6 +147,8 @@ public class RemoteEventServiceImpl extends RemoteServiceServlet implements Remo
 				  return result;
 			}
 		});
+		//? Register this remote event service the server-side handler.
+		RemoteEventHandler.getInstance().register(name, this);
 	}
 
 	@Override
