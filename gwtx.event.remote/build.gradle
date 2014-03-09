@@ -1,0 +1,39 @@
+apply plugin: 'java'
+apply plugin: 'osgi'
+
+repositories { 
+	mavenCentral() 
+}
+
+dependencies {
+ 	compile 'com.google.gwt:gwt-user:2.6.0'
+    compile 'com.google.gwt:gwt-dev:2.6.0'
+	compile 'com.googlecode.disruptor:disruptor:2.10.4' 
+	compile	'com.google.guava:guava:16.0.1'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src'
+        }
+        resources {
+            srcDir 'res'
+        }
+    }
+}
+
+jar {
+    manifest { // the manifest of the default jar is of type OsgiManifest
+        name = 'GWT Remote Event Bus'
+        version = '1.0.0'
+        symbolicName = 'gwtx.event.remote'
+		instruction 'Import-Package', 
+			'com.google.gwt.core.client;resolution:=optional',
+			'com.google.gwt.http.client;resolution:=optional',
+			'com.google.gwt.user.client;resolution:=optional',
+			'com.google.gwt.user.client.rpc; ;resolution:=optional',
+			 '*'
+    }
+	from sourceSets.main.allSource
+}
