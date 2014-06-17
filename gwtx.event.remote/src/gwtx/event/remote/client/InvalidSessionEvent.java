@@ -23,25 +23,25 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 
 /**
- * Fired when a remote event buffer overflow has occurred.
+ * Fired when the remote event bus session is invalid.
  * 
  * @author Dann Martens 
  */
-public class BufferOverflowEvent extends GwtEvent<BufferOverflowEvent.Handler> {
+public class InvalidSessionEvent extends GwtEvent<InvalidSessionEvent.Handler> {
 
 	/**
-	 * Implemented by objects that handle {@link BufferOverflowEvent}.
+	 * Implemented by objects that handle {@link InvalidSessionEvent}.
 	 */
 	public interface Handler extends EventHandler {
 
-		void onBufferOverflow(BufferOverflowEvent event);
+		void onInvalidSession(InvalidSessionEvent event);
 
 	}
 
 	public interface HasHandlers {
 
 		/**
-		 * Adds a {@link Handler} handler for {@link BufferOverflowEvent}
+		 * Adds a {@link Handler} handler for {@link InvalidSessionEvent}
 		 * events.
 		 * 
 		 * @param handler
@@ -54,25 +54,25 @@ public class BufferOverflowEvent extends GwtEvent<BufferOverflowEvent.Handler> {
 	/**
 	 * The event type.
 	 */
-	static Type<BufferOverflowEvent.Handler> TYPE = new Type<BufferOverflowEvent.Handler>();
+	static Type<InvalidSessionEvent.Handler> TYPE = new Type<InvalidSessionEvent.Handler>();
 
 	private RemoteEventBus remoteEventBus;
 
 	/**
-	 * Construct a new {@link BufferOverflowEvent}.
+	 * Construct a new {@link InvalidSessionEvent}.
 	 */
-	public BufferOverflowEvent(RemoteEventBus remoteEventBus) {
+	public InvalidSessionEvent(RemoteEventBus remoteEventBus) {
 		this.remoteEventBus = remoteEventBus;
 	}
 
 	@Override
-	public final Type<BufferOverflowEvent.Handler> getAssociatedType() {
+	public final Type<InvalidSessionEvent.Handler> getAssociatedType() {
 		return TYPE;
 	}
 
 	@Override
-	protected void dispatch(BufferOverflowEvent.Handler handler) {
-		handler.onBufferOverflow(this);
+	protected void dispatch(InvalidSessionEvent.Handler handler) {
+		handler.onInvalidSession(this);
 	}
 
 	public RemoteEventBus getRemoteEventBus() {

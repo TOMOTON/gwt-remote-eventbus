@@ -20,6 +20,7 @@ package gwtx.event.remote.client;
 import gwtx.event.remote.client.ConnectionTimeoutEvent.Handler;
 import gwtx.event.remote.shared.AbstractRemoteGwtEvent;
 import gwtx.event.remote.shared.BufferOverflowException;
+import gwtx.event.remote.shared.InvalidSessionException;
 import gwtx.event.remote.shared.RemoteGwtEvent;
 import gwtx.event.remote.shared.RemoteSessionId;
 import gwtx.event.remote.shared.SourceId;
@@ -115,6 +116,21 @@ public class RemoteEventBus implements ConnectionTimeoutEvent.HasHandlers, Buffe
 	
 	private AsyncCallback<Void> defaultCallback = DEFAULT_CALLBACK;
 
+	private FailureHandler failureHandler = new FailureHandler() {
+		@Override
+		public void onFailure(Throwable caught) {
+			if(caught instanceof StatusCodeException) {
+				StatusCodeException sce = (StatusCodeException) caught;
+				if(sce.getStatusCode() == 0) {
+					GWT.log("Silently closing with HTTP Status 0!");
+					GWT.log(String.valueOf(sce.getCause()));
+				}
+			} else {
+				Window.alert("Getting events failed! " + caught);
+			}
+		}
+	};
+	
 	private boolean autoUnsubscribe = true;
 	
 	private boolean scheduling = false;
@@ -124,7 +140,6 @@ public class RemoteEventBus implements ConnectionTimeoutEvent.HasHandlers, Buffe
 	private HandlerManager handlerManager = new HandlerManager(this);
 	
 	private Set<RemoteGwtEvent.Type<?>> autoSubscribedSet = new HashSet<RemoteGwtEvent.Type<?>>();
-	
 
 	public RemoteEventBus() {
 		RemoteEventServiceAsync rawService = GWT.create(RemoteEventService.class);
@@ -136,6 +151,17 @@ public class RemoteEventBus implements ConnectionTimeoutEvent.HasHandlers, Buffe
 		this.defaultCallback = defaultCallback;
 	}
 
+	public RemoteEventBus(FailureHandler failureHandler) {
+		this();
+		this.failureHandler = failureHandler;
+	}
+
+	public RemoteEventBus(AsyncCallback<Void> defaultCallback, FailureHandler failureHandler) {
+		this();
+		this.defaultCallback = defaultCallback;		
+		this.failureHandler = failureHandler;
+	}
+	
 	private <T> T wrapRPCService(T service) {
 		if (service == null) 
 			throw new NullPointerException("An initialized service object is required!");
@@ -314,15 +340,12 @@ public class RemoteEventBus implements ConnectionTimeoutEvent.HasHandlers, Buffe
 				} else
 				if(caught instanceof BufferOverflowException) {
 					handlerManager.fireEvent(new BufferOverflowEvent(RemoteEventBus.this));
-				}
-				if(caught instanceof StatusCodeException) {
-					StatusCodeException sce = (StatusCodeException) caught;
-					if(sce.getStatusCode() == 0) {
-						GWT.log("Silently closing with HTTP Status 0!");
-						GWT.log(String.valueOf(sce.getCause()));
-					}
 				} else
-				Window.alert("Getting events failed! " + caught);						
+				if(caught instanceof InvalidSessionException) {
+					handlerManager.fireEvent(new InvalidSessionEvent(RemoteEventBus.this));
+				} else {
+					failureHandler.onFailure(caught);
+				}					
 			}
 		});				
 	}

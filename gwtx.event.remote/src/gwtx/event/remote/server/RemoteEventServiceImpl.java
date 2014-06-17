@@ -19,6 +19,7 @@ package gwtx.event.remote.server;
 
 import gwtx.event.remote.client.RemoteEventService;
 import gwtx.event.remote.shared.BufferOverflowException;
+import gwtx.event.remote.shared.InvalidSessionException;
 import gwtx.event.remote.shared.RemoteEventBusException;
 import gwtx.event.remote.shared.RemoteGwtEvent;
 import gwtx.event.remote.shared.RemoteGwtEvent.Type;
@@ -204,10 +205,10 @@ public class RemoteEventServiceImpl extends RemoteServiceServlet implements Remo
 		SourceId sourceId = sessionManager.service(this.getThreadLocalRequest(), this.getThreadLocalResponse());
 		//! System.err.println("SourceId from Header (get) " + sourceId);
 		if(sourceId == null)
-			throw new RemoteEventBusException("Unknown source id!");
+			throw new InvalidSessionException();
 		Session session = sessionManager.getSession(sourceId);
 		if(session == null) {
-			throw new RemoteEventBusException("No session for source!");
+			throw new InvalidSessionException();
 		}
 		long lastSequence = session.getLastSequence();
 		long cursor = ringBuffer.getCursor();

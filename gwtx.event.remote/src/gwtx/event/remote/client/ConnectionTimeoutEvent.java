@@ -23,8 +23,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 
 
 /**
- * Fired when the event source is attached to the browser's document or detached
- * from it.
+ * Fired when the connection to the remote event bus has timed out.
  * 
  * @author Dann Martens 
  */
@@ -74,6 +73,10 @@ public class ConnectionTimeoutEvent extends GwtEvent<ConnectionTimeoutEvent.Hand
 	@Override
 	protected void dispatch(ConnectionTimeoutEvent.Handler handler) {
 		handler.onConnectionTimeout(this);
+	}
+
+	public RemoteEventBus getRemoteEventBus() {
+		return remoteEventBus;
 	}
 
 }

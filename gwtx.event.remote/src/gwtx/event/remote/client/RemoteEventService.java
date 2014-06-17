@@ -44,7 +44,7 @@ public abstract interface RemoteEventService extends RemoteService, HasRemoteHan
 	
 	<H> boolean addSubscription(Type<H> type);
 
-	<H> boolean removeSubscription(RemoteGwtEvent.Type<H> type);
+	<H> boolean removeSubscription(Type<H> type);
 	
 	List<RemoteGwtEvent<?>> getAvailableEvents() throws RemoteEventBusException;
 
