@@ -20,6 +20,7 @@ package gwtx.event.remote.client;
 import gwtx.event.remote.shared.AbstractRemoteGwtEvent;
 import gwtx.event.remote.shared.BufferOverflowException;
 import gwtx.event.remote.shared.InvalidSessionException;
+import gwtx.event.remote.shared.RemoteEventBusException;
 import gwtx.event.remote.shared.RemoteGwtEvent;
 import gwtx.event.remote.shared.RemoteSessionId;
 import gwtx.event.remote.shared.SourceId;
@@ -235,12 +236,16 @@ public class RemoteEventBus implements ConnectionTimeoutEvent.HasHandlers, Buffe
 				public void onResponseReceived(Request request, Response response) {
 					Console.log("HEAD response received " + response.getStatusCode());
 					if (200 == response.getStatusCode()) {
-						Console.log("[Status] Verified signature.");
+						Console.log("Verified variant.");
 						if (scheduling)
 							scheduleGetAvailableEvents();
 						callback.onSuccess(null);
+					} else 
+					if (404 == response.getStatusCode()) {						
+						Console.log("Variant not found.");
+						callback.onFailure(new VariantNotFoundException());
 					} else {
-						Window.Location.reload();
+						callback.onFailure(new RemoteEventBusException("An unknown problem occured checking the variant!"));
 					}
 				}
 			});

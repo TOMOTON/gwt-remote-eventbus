@@ -59,7 +59,13 @@ public class AutoSessionController implements ConnectionTimeoutEvent.Handler, Bu
 					remoteEventBus.resumeSession(new AsyncCallback<Void>() {
 						@Override
 						public void onFailure(Throwable caught) {
-							Console.log("[AutoSessionManager] Resume failed " + caught);
+							if (caught instanceof VariantNotFoundException) {
+								//? The server might have changed under us.
+								Window.Location.reload();
+							} else {
+								Console.log("[AutoSessionManager] Resume failed " + caught);	
+								scheduleResumeSession(); //? Try again.
+							}
 						}
 						@Override
 						public void onSuccess(Void result) {

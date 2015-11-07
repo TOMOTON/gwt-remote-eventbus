@@ -36,8 +36,8 @@ import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 /**
- * Generates a signature at compile time. This version is derived
- * at using a random UUID.
+ * Generates a variant at compile time. Its value is derived
+ * using a random UUID.
  * 
  * @author Dann Martens
  */
@@ -74,7 +74,7 @@ public class VariantGenerator extends Generator {
 				source.println("}");
 				source.println();
 				source.commit(logger);			
-				emitSignatureArtifact(logger, context, variantValue);
+				emitVariantArtifact(logger, context, variantValue);
 			}
 		} catch (NotFoundException nfe) {
 			logger.log(Type.ERROR, "Could not find type '" + typeName + "'!", nfe);
@@ -109,7 +109,7 @@ public class VariantGenerator extends Generator {
 		return classType.getSimpleSourceName() + "_default_VariantGenerator";	
 	}
 	
-	private void emitSignatureArtifact(TreeLogger logger, GeneratorContext context, String variantValue) throws UnableToCompleteException {
+	private void emitVariantArtifact(TreeLogger logger, GeneratorContext context, String variantValue) throws UnableToCompleteException {
 		try {
 			OutputStream out = context.tryCreateResource(logger, PATH + variantValue);
 			out.write(" ".getBytes("UTF-8"));
