@@ -17,14 +17,15 @@
  */
 package gwtx.event.remote.client;
 
-
 /**
- * Implemented by failure handlers.
+ * Simple wrapper for the browser console.
  * 
  * @author Dann Martens
  */
-public interface FailureHandler {
+public class Console {
 
-	void onFailure(Throwable caught);
+	public static final native void log(String message) /*-{
+		console.log(message);
+	}-*/;
 	
 }

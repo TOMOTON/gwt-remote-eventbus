@@ -17,6 +17,7 @@
  */
 package gwtx.event.remote.shared;
 
+
 /**
  * Implementations of this interface offer an entry point to fire events in
  * the remote event bus.

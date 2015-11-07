@@ -8,4 +8,8 @@
   <source path='client'/>
   <source path='shared'/>
 
+  <generate-with class='gwtx.event.remote.rebind.VariantGenerator'>
+  	<when-type-assignable class='gwtx.event.remote.client.Variant'></when-type-assignable>
+  </generate-with> 
+
 </module>

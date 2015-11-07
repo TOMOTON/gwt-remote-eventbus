@@ -22,6 +22,7 @@ import gwtx.event.remote.shared.RemoteEventBusException;
 import gwtx.event.remote.shared.RemoteGwtEvent;
 import gwtx.event.remote.shared.RemoteGwtEvent.Type;
 import gwtx.event.remote.shared.RemoteSessionId;
+import gwtx.event.remote.shared.SourceId;
 
 import java.util.List;
 

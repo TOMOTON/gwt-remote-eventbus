@@ -20,11 +20,11 @@ package gwtx.event.remote.client;
 import gwtx.event.remote.shared.RemoteGwtEvent;
 import gwtx.event.remote.shared.RemoteGwtEvent.Type;
 import gwtx.event.remote.shared.RemoteSessionId;
+import gwtx.event.remote.shared.SourceId;
 
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-
 
 /**
  * Asynchronous interface corresponding to <code>RemoteEventService</code>.

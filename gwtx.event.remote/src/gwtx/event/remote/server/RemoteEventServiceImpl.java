@@ -177,6 +177,15 @@ public class RemoteEventServiceImpl extends RemoteServiceServlet implements Remo
 		return new RemoteSessionId(serverId, sourceId);
 	}
 
+//	@Override
+//	public RemoteSessionId resumeSession(SourceId sourceId) throws RemoteEventBusException {
+//		Session session = sessionManager.getSession(sourceId);
+//		System.err.println("Resuming session for source " + sourceId.asString());
+//		if (session == null || session.isInvalidated())
+//			throw new RemoteEventBusException("Invalid session cannot be resumed!");
+//		return new RemoteSessionId(serverId, sourceId);
+//	}
+
 	@Override
 	public void invalidateSession() {
 		SourceId sourceId = sessionManager.service(this.getThreadLocalRequest(), this.getThreadLocalResponse());

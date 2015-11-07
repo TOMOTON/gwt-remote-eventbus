@@ -21,6 +21,7 @@ import java.io.Serializable;
 
 import com.google.gwt.event.shared.GwtEvent;
 
+
 /**
  * Base transfer object interface for remote events. To implement a remote 
  * event, a <code>AbstractRemoteGwtEvent</code should be used, which already

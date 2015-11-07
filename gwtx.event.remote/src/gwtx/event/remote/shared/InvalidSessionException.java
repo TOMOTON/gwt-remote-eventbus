@@ -17,6 +17,7 @@
  */
 package gwtx.event.remote.shared;
 
+
 /**
  * Thrown when the session id used when to retrieve the remote events
  * is no longer valid.

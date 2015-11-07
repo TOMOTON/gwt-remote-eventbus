@@ -15,19 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package gwtx.event.remote.shared;
+package gwtx.event.remote.client;
 
 
 /**
- * Thrown to indicate that during the retrieval of events for a particular
- * client, a buffer location was used which was already overwritten by the
- * event publisher.
+ * Unique identifier which makes it possible to detect different server and
+ * build variations.
  * 
  * @author Dann Martens
  */
-public class BufferOverflowException extends RemoteEventBusException {
+public interface Variant {
 
-	/* Managed UID. */
-	private static final long serialVersionUID = 1L;
+	String getValue();
 	
+	String getPath();
 }

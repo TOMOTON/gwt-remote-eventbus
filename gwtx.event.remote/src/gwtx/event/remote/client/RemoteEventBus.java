@@ -17,7 +17,6 @@
  */
 package gwtx.event.remote.client;
 
-import gwtx.event.remote.client.ConnectionTimeoutEvent.Handler;
 import gwtx.event.remote.shared.AbstractRemoteGwtEvent;
 import gwtx.event.remote.shared.BufferOverflowException;
 import gwtx.event.remote.shared.InvalidSessionException;
@@ -25,9 +24,7 @@ import gwtx.event.remote.shared.RemoteGwtEvent;
 import gwtx.event.remote.shared.RemoteSessionId;
 import gwtx.event.remote.shared.SourceId;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -35,8 +32,13 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.RequestTimeoutException;
+import com.google.gwt.http.client.Response;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
@@ -59,14 +61,18 @@ import com.google.web.bindery.event.shared.Event;
  */
 public class RemoteEventBus implements ConnectionTimeoutEvent.HasHandlers, BufferOverflowEvent.HasHandlers {
 
+	public static final int DEFAULT_TIMEOUT_IN_MILLIS = 30000;
+	
+	private static final Variant VARIANT = GWT.create(Variant.class);
+	
     private static class SilentAsyncCallback implements AsyncCallback<Void> {
     	
         public void onFailure(Throwable caught) {
-        	GWT.log("SilentAsyncCallback.onFailure (" + caught + ')');
+        	Console.log("SilentAsyncCallback.onFailure (" + caught + ')');
         }
 
         public void onSuccess(Void result) {
-        	GWT.log("SilentAsyncCallback.onSuccess ");
+        	Console.log("SilentAsyncCallback.onSuccess ");
         }
         
     }
@@ -122,8 +128,8 @@ public class RemoteEventBus implements ConnectionTimeoutEvent.HasHandlers, Buffe
 			if(caught instanceof StatusCodeException) {
 				StatusCodeException sce = (StatusCodeException) caught;
 				if(sce.getStatusCode() == 0) {
-					GWT.log("Silently closing with HTTP Status 0!");
-					GWT.log(String.valueOf(sce.getCause()));
+					Console.log("Silently closing with HTTP Status 0!");
+					Console.log(String.valueOf(sce.getCause()));
 				}
 			} else {
 				Window.alert("Getting events failed! " + caught);
@@ -135,11 +141,11 @@ public class RemoteEventBus implements ConnectionTimeoutEvent.HasHandlers, Buffe
 	
 	private boolean scheduling = false;
 	
-	private int getTimeoutInMillis = 30000;
+	private int timeoutInMillis = DEFAULT_TIMEOUT_IN_MILLIS;
 	
 	private HandlerManager handlerManager = new HandlerManager(this);
 	
-	private Set<RemoteGwtEvent.Type<?>> autoSubscribedSet = new HashSet<RemoteGwtEvent.Type<?>>();
+	//private Set<RemoteGwtEvent.Type<?>> autoSubscribedSet = new HashSet<RemoteGwtEvent.Type<?>>();
 
 	public RemoteEventBus() {
 		RemoteEventServiceAsync rawService = GWT.create(RemoteEventService.class);
@@ -173,7 +179,7 @@ public class RemoteEventBus implements ConnectionTimeoutEvent.HasHandlers, Buffe
 				if(sourceId != null) {
 					requestBuilder.setHeader("X-GWT-RemoteEventSource", sourceId.asString());
 				}
-				requestBuilder.setTimeoutMillis(getTimeoutInMillis);
+				requestBuilder.setTimeoutMillis(timeoutInMillis);
 				return requestBuilder;
 			}
 		};
@@ -182,11 +188,11 @@ public class RemoteEventBus implements ConnectionTimeoutEvent.HasHandlers, Buffe
 	}
 	
 	public int getTimeout() {
-		return getTimeoutInMillis;
+		return timeoutInMillis;
 	}
 
 	public void setTimeout(int timeoutInMillis) {
-		this.getTimeoutInMillis = timeoutInMillis;
+		this.timeoutInMillis = timeoutInMillis;
 	}
 	
 	public boolean isAutoUnsubscribe() {
@@ -215,6 +221,33 @@ public class RemoteEventBus implements ConnectionTimeoutEvent.HasHandlers, Buffe
 			}
 		});
 	}
+
+	public void resumeSession(final AsyncCallback<Void> callback) {
+		String location = GWT.getModuleBaseURL() + VARIANT.getPath() + VARIANT.getValue();
+		Console.log("HTTP-HEAD " + location);
+		RequestBuilder builder = new RequestBuilder(RequestBuilder.HEAD, URL.encode(location));
+		try {
+			builder.sendRequest(null, new RequestCallback() {
+				public void onError(Request request, Throwable exception) {
+					Console.log("HEAD request encountered an error: " + exception);
+					callback.onFailure(exception);
+				}
+				public void onResponseReceived(Request request, Response response) {
+					Console.log("HEAD response received " + response.getStatusCode());
+					if (200 == response.getStatusCode()) {
+						Console.log("[Status] Verified signature.");
+						if (scheduling)
+							scheduleGetAvailableEvents();
+						callback.onSuccess(null);
+					} else {
+						Window.Location.reload();
+					}
+				}
+			});
+		} catch (RequestException re) {
+			callback.onFailure(re);
+		}
+	}
 	
 	public void invalidateSession(final AsyncCallback<Void> callback) {
 		if(!scheduling) {
@@ -228,7 +261,7 @@ public class RemoteEventBus implements ConnectionTimeoutEvent.HasHandlers, Buffe
 			}
 			@Override
 			public void onSuccess(Void result) {
-				GWT.log("Invalidated session with source id " + sourceId.asString() + ".");
+				Console.log("Invalidated session with source id " + sourceId.asString() + ".");
 				callback.onSuccess(null);
 			}
 		});
@@ -293,7 +326,7 @@ public class RemoteEventBus implements ConnectionTimeoutEvent.HasHandlers, Buffe
 		}
 		scheduling = true;
 		scheduleGetAvailableEvents();
-		GWT.log("Started scheduling.");
+		Console.log("Started scheduling.");
 	}
 	
 	private void stopScheduling() {
@@ -301,7 +334,7 @@ public class RemoteEventBus implements ConnectionTimeoutEvent.HasHandlers, Buffe
 			throw new IllegalStateException("Scheduling has already stopped!");
 		}
 		scheduling = false;
-		GWT.log("Stopped scheduling.");
+		Console.log("Stopped scheduling.");
 	}
 	
 	private void scheduleGetAvailableEvents() {
@@ -316,17 +349,17 @@ public class RemoteEventBus implements ConnectionTimeoutEvent.HasHandlers, Buffe
 	}	
 
 	private void getAvailableEvents() {
-		GWT.log("...executing!");
+		Console.log("Getting available events...");
 		remoteEventService.getAvailableEvents(new AsyncCallback<List<RemoteGwtEvent<?>>>() {
 			@Override
 			public void onSuccess(List<RemoteGwtEvent<?>> result) {
-				GWT.log("Received events " + result.size());
+				Console.log("Received events " + result.size());
 				for(RemoteGwtEvent<?> event: result) {
-					GWT.log("Posting locally event...");
+					Console.log("Forwarding remote event locally ...");
 					if(event instanceof AbstractRemoteGwtEvent) {
 						handlerManager.fireEvent((AbstractRemoteGwtEvent<?>) event);
 					} else {
-						GWT.log("Unknown event type! " + event.getClass());
+						Console.log("Unknown event type! " + event.getClass());
 					}
 				}
 				if(scheduling) {
@@ -351,13 +384,21 @@ public class RemoteEventBus implements ConnectionTimeoutEvent.HasHandlers, Buffe
 	}
 	
 	@Override
-	public HandlerRegistration addConnectionTimeoutHandler(Handler handler) {
+	public HandlerRegistration addConnectionTimeoutHandler(ConnectionTimeoutEvent.Handler handler) {
 		return handlerManager.addHandler(ConnectionTimeoutEvent.TYPE, handler);
 	}
 
 	@Override
 	public HandlerRegistration addBufferOverflowHandler(BufferOverflowEvent.Handler handler) {
 		return handlerManager.addHandler(BufferOverflowEvent.TYPE, handler);
+	}
+
+	public HandlerRegistration addInvalidSessionHandler(InvalidSessionEvent.Handler handler) {
+		return handlerManager.addHandler(InvalidSessionEvent.TYPE, handler);
+	}
+	
+	public void setFailureHandler(FailureHandler failureHandler) {
+		this.failureHandler = failureHandler;
 	}
 
 }
